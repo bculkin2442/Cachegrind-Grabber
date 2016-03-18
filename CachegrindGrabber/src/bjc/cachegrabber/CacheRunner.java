@@ -8,9 +8,10 @@ import java.util.Scanner;
 public class CacheRunner {
 	public static Scanner runCachegrind(CacheTriple ct, String progr) {
 		String initCom = "valgrind --tool=cachegrind --I1=4096,64,64 --D1="
-				+ ct.cacheSize + "," + ct.associativity + "," + ct.blockSize
-				+ " --LL=16384,64,64 " + progr;
+				+ ct.getCacheSize() + "," + ct.getAssociativity() + ","
+				+ ct.getBlockSize() + " --LL=16384,64,64 " + progr;
 
+		System.err.println("Initial command: " + initCom);
 		try {
 
 			ProcessBuilder pb = new ProcessBuilder(initCom.split(" "));
@@ -23,8 +24,8 @@ public class CacheRunner {
 	}
 
 	public static Map<CacheTriple, Double> runMultiCachegrind(
-			Integer[] cacheSize, Integer[] associativity, Integer[] blockSize,
-			String progName) {
+			Integer[] cacheSize, Integer[] associativity,
+			Integer[] blockSize, String progName) {
 
 		Map<CacheTriple, Double> results = new HashMap<CacheTriple, Double>();
 

@@ -14,10 +14,9 @@ public class CacheGrabber {
 				break;
 			}
 		}
-		
-		return Double.parseDouble(strangs[4].substring(0,
-				strangs[4].length() - 1));
-	}
 
+		return Double.parseDouble(
+				strangs[4].substring(0, strangs[4].length() - 1));
+	}
 
 }
