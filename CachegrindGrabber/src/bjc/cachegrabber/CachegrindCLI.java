@@ -12,7 +12,16 @@ import java.util.Set;
 
 import com.bethecoder.ascii_table.ASCIITable;
 
+/**
+ * Command line interface to the Cachegrind grabber
+ * @author ben
+ *
+ */
 public class CachegrindCLI {
+	/**
+	 * Main method
+	 * @param args Unused CLI args
+	 */
 	public static void main(String[] args) {
 		Scanner scn = new Scanner(System.in);
 
@@ -113,7 +122,7 @@ public class CachegrindCLI {
 
 	private static List<Integer> getAssociativities(Scanner scn) {
 		System.out.print("Enter the initial associativity to test with: ");
-		List<Integer> associativities = new LinkedList<Integer>();
+		List<Integer> associativities = new LinkedList<>();
 		associativities.add(Integer.parseInt(scn.nextLine()));
 
 		System.out.print(
@@ -134,7 +143,7 @@ public class CachegrindCLI {
 	private static List<Integer> getBlockSizes(Scanner scn) {
 		System.out.print(
 				"Enter the initial block size to test with (in bytes): ");
-		List<Integer> blockSizes = new LinkedList<Integer>();
+		List<Integer> blockSizes = new LinkedList<>();
 		blockSizes.add(Integer.parseInt(scn.nextLine()));
 
 		System.out.print(
@@ -155,7 +164,7 @@ public class CachegrindCLI {
 	private static List<Integer> getCacheSizes(Scanner scn) {
 		System.out.print(
 				"Enter the initial cache size to test with (in bytes): ");
-		List<Integer> cacheSizes = new LinkedList<Integer>();
+		List<Integer> cacheSizes = new LinkedList<>();
 		cacheSizes.add(Integer.parseInt(scn.nextLine()));
 
 		System.out.print(

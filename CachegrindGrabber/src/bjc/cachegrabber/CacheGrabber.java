@@ -2,7 +2,21 @@ package bjc.cachegrabber;
 
 import java.util.Scanner;
 
+/**
+ * Class to retrieve data miss percentage from cachegrind output
+ * 
+ * @author ben
+ *
+ */
 public class CacheGrabber {
+	/**
+	 * Get the data miss percentage from a scanner attached to cachegrind
+	 * output
+	 * 
+	 * @param scn
+	 *            A scanner attached to cachegrind output
+	 * @return The data miss percentage of the provided output
+	 */
 	public static double getDataMissPercentage(Scanner scn) {
 		String[] strangs = new String[1];
 
