@@ -3,6 +3,9 @@ package bjc.cachegrabber;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +17,16 @@ import com.bethecoder.ascii_table.ASCIITable;
 
 /**
  * Command line interface to the Cachegrind grabber
+ * 
  * @author ben
  *
  */
 public class CachegrindCLI {
 	/**
 	 * Main method
-	 * @param args Unused CLI args
+	 * 
+	 * @param args
+	 *            Unused CLI args
 	 */
 	public static void main(String[] args) {
 		Scanner scn = new Scanner(System.in);
@@ -57,7 +63,9 @@ public class CachegrindCLI {
 						.runMultiCachegrind(cacheSizes, associativities,
 								blockSizes, progName);
 				Set<Entry<CacheTriple, Double>> st = res.entrySet();
-				String[][] cacheResults = buildCacheResults(st);
+
+				String[][] cacheResults = buildCacheResults(
+						sortCacheResults(st));
 
 				System.out.println("Results for program " + progName);
 
@@ -95,6 +103,16 @@ public class CachegrindCLI {
 		 */
 
 		scn.close();
+	}
+
+	private static Set<Entry<CacheTriple, Double>> sortCacheResults(
+			Set<Entry<CacheTriple, Double>> st) {
+		List<Entry<CacheTriple, Double>> resultList = new ArrayList<>(st);
+
+		Collections.sort(resultList,
+				new CacheResultComparator());
+		
+		return new HashSet<>(resultList);
 	}
 
 	private static String[][] buildCacheResults(
