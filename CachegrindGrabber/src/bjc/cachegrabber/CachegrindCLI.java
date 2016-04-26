@@ -13,7 +13,8 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
-import com.bethecoder.ascii_table.ASCIITable;
+import com.bethecoder.ascii_table.ASCIITableFactory;
+import com.bethecoder.ascii_table.spec.AlignmentValues;
 
 /**
  * Command line interface to the Cachegrind grabber
@@ -22,134 +23,52 @@ import com.bethecoder.ascii_table.ASCIITable;
  *
  */
 public class CachegrindCLI {
-	/**
-	 * Main method
-	 * 
-	 * @param args
-	 *            Unused CLI args
-	 */
-	public static void main(String[] args) {
-		Scanner scn = new Scanner(System.in);
+	private static NumberFormat decimalFormatter;
 
-		System.out.print("Use multi-profiling mode? (true/false): ");
-		boolean multiMode = Boolean.parseBoolean(scn.nextLine());
-
-		Integer[] ia = new Integer[0];
-
-		Integer[] cacheSizes = getCacheSizes(scn).toArray(ia);
-		Integer[] blockSizes = getBlockSizes(scn).toArray(ia);
-		Integer[] associativities = getAssociativities(scn).toArray(ia);
-
-		if (multiMode) {
-			System.out.print(
-					"Enter the name of the first program to profile: ");
-			List<String> progNames = new LinkedList<>();
-			progNames.add(scn.nextLine());
-
-			System.out.print(
-					"Would you like to profile an additional program? (true/false): ");
-
-			while (Boolean.parseBoolean(scn.nextLine()) == true) {
-				System.out.print(
-						"Enter the name of the next program to profile: ");
-				progNames.add(scn.nextLine());
-
-				System.out.print(
-						"Would you like to profile an additional program? (true/false): ");
-			}
-
-			for (String progName : progNames) {
-				Map<CacheTriple, Double> res = CacheRunner
-						.runMultiCachegrind(cacheSizes, associativities,
-								blockSizes, progName);
-				Set<Entry<CacheTriple, Double>> st = res.entrySet();
-
-				String[][] cacheResults = buildCacheResults(
-						sortCacheResults(st));
-
-				System.out.println("Results for program " + progName);
-
-				ASCIITable.getInstance().printTable(
-						new String[] { "Cache size", "Line size",
-								"Associativity", "Data Miss Percentage" },
-						cacheResults, ASCIITable.ALIGN_CENTER);
-
-				System.out.println();
-			}
-		} else {
-			System.out.print("Enter the name of the program to profile: ");
-			String progName = scn.nextLine();
-
-			Map<CacheTriple, Double> res = CacheRunner.runMultiCachegrind(
-					cacheSizes, associativities, blockSizes, progName);
-
-			Set<Entry<CacheTriple, Double>> st = res.entrySet();
-
-			String[][] cacheResults = buildCacheResults(st);
-
-			ASCIITable.getInstance().printTable(
-					new String[] { "Cache size", "Line size",
-							"Associativity", "Data Miss Percentage" },
-					cacheResults, ASCIITable.ALIGN_CENTER);
-		}
-		/*
-		 * for (Entry<CacheTriple, Double> e : st) { CacheTriple ct =
-		 * e.getKey();
-		 * 
-		 * System.out.printf(
-		 * "Cache size: %d - Associativity: %d - Line Size: %d \t\t Data Miss %%:%f"
-		 * , ct.getCacheSize(), ct.getAssociativity(), ct.getBlockSize(),
-		 * e.getValue()); }
-		 */
-
-		scn.close();
+	static {
+		decimalFormatter = DecimalFormat.getInstance();
 	}
 
-	private static Set<Entry<CacheTriple, Double>> sortCacheResults(
-			Set<Entry<CacheTriple, Double>> st) {
-		List<Entry<CacheTriple, Double>> resultList = new ArrayList<>(st);
-
-		Collections.sort(resultList,
-				new CacheResultComparator());
-		
-		return new HashSet<>(resultList);
-	}
-
-	private static String[][] buildCacheResults(
-			Set<Entry<CacheTriple, Double>> st) {
-		String[][] res = new String[st.size()][4];
+	private static String[][]
+			buildCacheResults(Set<Entry<CacheTriple, Double>> resultSet) {
+		String[][] stringizedResults = new String[resultSet.size()][4];
 
 		int i = 0;
 
-		for (Entry<CacheTriple, Double> entry : st) {
+		for (Entry<CacheTriple, Double> entry : resultSet) {
 			CacheTriple triple = entry.getKey();
 
-			BigDecimal bd = new BigDecimal(entry.getValue());
-			NumberFormat nf = DecimalFormat.getInstance();
+			BigDecimal entryValue = new BigDecimal(entry.getValue());
 
-			res[i][0] = Integer.toString(triple.getCacheSize());
-			res[i][1] = Integer.toString(triple.getBlockSize());
-			res[i][2] = Integer.toString(triple.getAssociativity());
-			res[i][3] = nf.format(bd) + "%";
+			stringizedResults[i][0] =
+					Integer.toString(triple.getCacheSize());
+			stringizedResults[i][1] =
+					Integer.toString(triple.getBlockSize());
+			stringizedResults[i][2] =
+					Integer.toString(triple.getAssociativity());
+			stringizedResults[i][3] =
+					decimalFormatter.format(entryValue) + "%";
 
 			i++;
 		}
 
-		return res;
+		return stringizedResults;
 	}
 
-	private static List<Integer> getAssociativities(Scanner scn) {
-		System.out.print("Enter the initial associativity to test with: ");
-		List<Integer> associativities = new LinkedList<>();
-		associativities.add(Integer.parseInt(scn.nextLine()));
-
+	private static List<Integer> getIntArray(Scanner inputSource,
+			String fieldName) {
 		System.out.print(
-				"Would you like to test with an additional associativity? (true/false): ");
+				"Enter the initial " + fieldName + " to test with: ");
+		List<Integer> associativities = new LinkedList<>();
+		associativities.add(Integer.parseInt(inputSource.nextLine()));
 
-		while (Boolean.parseBoolean(scn.nextLine()) == true) {
-			System.out.print(
-					"Enter the next associativity to test with (in bytes): ");
-			associativities.add(Integer.parseInt(scn.nextLine()));
+		System.out.print("Would you like to test with an additional "
+				+ fieldName + "? (true/false): ");
+
+		while (Boolean.parseBoolean(inputSource.nextLine()) == true) {
+			System.out.print("Enter the next " + fieldName
+					+ " to test with (in bytes): ");
+			associativities.add(Integer.parseInt(inputSource.nextLine()));
 
 			System.out.print(
 					"Would you like to test with an additional associativity? (true/false): ");
@@ -158,45 +77,90 @@ public class CachegrindCLI {
 		return associativities;
 	}
 
-	private static List<Integer> getBlockSizes(Scanner scn) {
-		System.out.print(
-				"Enter the initial block size to test with (in bytes): ");
-		List<Integer> blockSizes = new LinkedList<>();
-		blockSizes.add(Integer.parseInt(scn.nextLine()));
+	/**
+	 * Main method
+	 * 
+	 * @param args
+	 *            CLI args
+	 */
+	public static void main(String[] args) {
+		Scanner inputSource = new Scanner(System.in);
 
-		System.out.print(
-				"Would you like to test with an additional block size? (true/false): ");
+		System.out.print("Use multi-profiling mode? (true/false): ");
+		boolean multiMode = Boolean.parseBoolean(inputSource.nextLine());
 
-		while (Boolean.parseBoolean(scn.nextLine()) == true) {
+		Integer[] intArr = new Integer[0];
+
+		Integer[] cacheSizes =
+				getIntArray(inputSource, "cache size").toArray(intArr);
+		Integer[] blockSizes =
+				getIntArray(inputSource, "block size").toArray(intArr);
+		Integer[] associativities =
+				getIntArray(inputSource, "associativities")
+						.toArray(intArr);
+
+		if (multiMode) {
 			System.out.print(
-					"Enter the next block size to test with (in bytes): ");
-			blockSizes.add(Integer.parseInt(scn.nextLine()));
+					"Enter the name of the first program to profile: ");
+			List<String> progNames = new LinkedList<>();
+			progNames.add(inputSource.nextLine());
 
 			System.out.print(
-					"Would you like to test with an additional block size? (true/false): ");
+					"Would you like to profile an additional program? (true/false): ");
 
+			while (Boolean.parseBoolean(inputSource.nextLine()) == true) {
+				System.out.print(
+						"Enter the name of the next program to profile: ");
+				progNames.add(inputSource.nextLine());
+
+				System.out.print(
+						"Would you like to profile an additional program? (true/false): ");
+			}
+
+			for (String progName : progNames) {
+				runCachegrind(cacheSizes, blockSizes, associativities,
+						progName);
+			}
+		} else {
+			System.out.print("Enter the name of the program to profile: ");
+			String progName = inputSource.nextLine();
+
+			runCachegrind(cacheSizes, blockSizes, associativities,
+					progName);
 		}
-		return blockSizes;
+
+		inputSource.close();
 	}
 
-	private static List<Integer> getCacheSizes(Scanner scn) {
-		System.out.print(
-				"Enter the initial cache size to test with (in bytes): ");
-		List<Integer> cacheSizes = new LinkedList<>();
-		cacheSizes.add(Integer.parseInt(scn.nextLine()));
+	private static void runCachegrind(Integer[] cacheSizes,
+			Integer[] blockSizes, Integer[] associativities,
+			String progName) {
+		Map<CacheTriple, Double> programResults =
+				CacheRunner.runMultiCachegrind(cacheSizes, associativities,
+						blockSizes, progName);
+		Set<Entry<CacheTriple, Double>> resultSet =
+				programResults.entrySet();
 
-		System.out.print(
-				"Would you like to test with an additional cache size? (true/false): ");
+		String[][] stringizedResults =
+				buildCacheResults(sortCacheResults(resultSet));
 
-		while (Boolean.parseBoolean(scn.nextLine()) == true) {
-			System.out.print(
-					"Enter the next cache size to test with (in bytes): ");
-			cacheSizes.add(Integer.parseInt(scn.nextLine()));
+		System.out.println("Results for program " + progName);
 
-			System.out.print(
-					"Would you like to test with an additional cache size? (true/false): ");
+		ASCIITableFactory.getDefault().printTable(
+				new String[] { "Cache size", "Line size", "Associativity",
+						"Data Miss Percentage" },
+				stringizedResults, AlignmentValues.ALIGN_CENTER);
 
-		}
-		return cacheSizes;
+		System.out.println();
+	}
+
+	private static Set<Entry<CacheTriple, Double>>
+			sortCacheResults(Set<Entry<CacheTriple, Double>> resultSet) {
+		List<Entry<CacheTriple, Double>> resultList =
+				new ArrayList<>(resultSet);
+
+		Collections.sort(resultList, new CacheResultComparator());
+
+		return new HashSet<>(resultList);
 	}
 }

@@ -1,6 +1,7 @@
 package bjc.cachegrabber;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -15,25 +16,28 @@ public class CacheRunner {
 	/**
 	 * Run cachegrind for the provided parameters
 	 * 
-	 * @param ct
+	 * @param triple
 	 *            The set of parameters to use
-	 * @param progr
+	 * @param programName
 	 *            The program to run
 	 * @return A scanner attached to the output
 	 */
-	public static Scanner runCachegrind(CacheTriple ct, String progr) {
-		String initCom = "valgrind --tool=cachegrind --I1=4096,64,64 --D1="
-				+ ct.getCacheSize() + "," + ct.getAssociativity() + ","
-				+ ct.getBlockSize() + " --LL=16384,64,64 " + progr;
+	public static Scanner runCachegrind(CacheTriple triple,
+			String programName) {
+		String initCom = MessageFormat.format(
+				"valgrind --tool=cachegrind --I1=4096,64,64 --D1={0},{1},{2} --LL=16384,64,64 {3}",
+				triple.getCacheSize(), triple.getAssociativity(),
+				triple.getBlockSize(), programName);
 
-		System.err.println("Initial command: " + initCom);
+		System.err.println("Running command: " + initCom);
+
 		try {
-
 			ProcessBuilder pb = new ProcessBuilder(initCom.split(" "));
 
 			return new Scanner(pb.start().getErrorStream());
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException ioex) {
+			ioex.printStackTrace();
+
 			return null;
 		}
 	}
@@ -42,34 +46,38 @@ public class CacheRunner {
 	 * Run cachegrind with multiple differing parameters on the same
 	 * program
 	 * 
-	 * @param cacheSize
+	 * @param cacheSizes
 	 *            The list of cache sizes to use
-	 * @param associativity
+	 * @param associativities
 	 *            The list of associativities to use
-	 * @param blockSize
+	 * @param blockSizes
 	 *            The list of block sizes to use
-	 * @param progName
+	 * @param programName
 	 *            The program to run
 	 * @return A map of parameters to data miss percentages
 	 */
 	public static Map<CacheTriple, Double> runMultiCachegrind(
-			Integer[] cacheSize, Integer[] associativity,
-			Integer[] blockSize, String progName) {
+			Integer[] cacheSizes, Integer[] associativities,
+			Integer[] blockSizes, String programName) {
 
 		Map<CacheTriple, Double> results = new HashMap<>();
 
-		for (int cSize : cacheSize) {
-			for (int aCount : associativity) {
-				for (int bSize : blockSize) {
+		for (int cacheSize : cacheSizes) {
+			for (int associativity : associativities) {
+				for (int blockSize : blockSizes) {
 
-					CacheTriple ct = new CacheTriple(bSize, aCount, cSize);
+					CacheTriple triple = new CacheTriple(blockSize,
+							associativity, cacheSize);
 
-					Scanner resSC = runCachegrind(ct, progName);
+					Scanner resultScanner =
+							runCachegrind(triple, programName);
 
-					double missPercentage =
-							CacheGrabber.getDataMissPercentage(resSC);
+					double missPercentage = CacheGrabber
+							.getDataMissPercentage(resultScanner);
 
-					results.put(ct, missPercentage);
+					resultScanner.close();
+
+					results.put(triple, missPercentage);
 				}
 			}
 		}

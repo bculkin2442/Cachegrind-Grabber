@@ -28,17 +28,17 @@ public class CacheTriple {
 	}
 
 	/**
-	 * @return the blockSize
-	 */
-	public int getBlockSize() {
-		return blockSize;
-	}
-
-	/**
 	 * @return the associativity
 	 */
 	public int getAssociativity() {
 		return associativity;
+	}
+
+	/**
+	 * @return the blockSize
+	 */
+	public int getBlockSize() {
+		return blockSize;
 	}
 
 	/**

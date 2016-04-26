@@ -18,19 +18,19 @@ public class CacheGrabber {
 	 * @return The data miss percentage of the provided output
 	 */
 	public static double getDataMissPercentage(Scanner scn) {
-		String[] strangs = new String[1];
+		String[] lines = new String[1];
 
 		while (scn.hasNextLine()) {
 			String strung = scn.nextLine();
 
 			if (strung.contains("D1  miss rate:")) {
-				strangs = strung.replaceAll("\\s+", " ").split(" ");
+				lines = strung.replaceAll("\\s+", " ").split(" ");
 				break;
 			}
 		}
 
-		return Double.parseDouble(
-				strangs[4].substring(0, strangs[4].length() - 1));
+		return Double
+				.parseDouble(lines[4].substring(0, lines[4].length() - 1));
 	}
 
 }
