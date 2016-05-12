@@ -159,8 +159,6 @@ public class CachegrindCLI {
 		List<Entry<CacheTriple, Double>> resultList =
 				new ArrayList<>(resultSet);
 
-		Collections.sort(resultList, new CacheResultComparator());
-
 		return new HashSet<>(resultList);
 	}
 }
